@@ -1,0 +1,848 @@
+<html lang="zh"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meigenist的日志 | 赛博案卷</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-red': '#ff2a6d',
+                        'neon-blue': '#05d9e8',
+                        'neon-purple': '#d300c5',
+                        'cyber-black': '#050505',
+                        'cyber-gray': '#121212',
+                        'cyber-light': '#1e1e1e'
+                    },
+                    fontFamily: {
+                        pixel: ['"Press Start 2P"', 'monospace'],
+                        cyber: ['Orbitron', 'sans-serif']
+                    },
+                    animation: {
+                        'glitch': 'glitch 1s infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'scanline': 'scanline 4s linear infinite'
+                    },
+                    keyframes: {
+                        glitch: {
+                            '0%, 100%': { transform: 'translate(0)' },
+                            '33%': { transform: 'translate(-5px, 2px)' },
+                            '66%': { transform: 'translate(5px, -2px)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' }
+                        },
+                        scanline: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(100%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow-neon-red {
+                text-shadow: 0 0 5px #ff2a6d, 0 0 10px #ff2a6d, 0 0 20px #ff2a6d;
+            }
+            .text-shadow-neon-blue {
+                text-shadow: 0 0 5px #05d9e8, 0 0 10px #05d9e8, 0 0 20px #05d9e8;
+            }
+            .text-shadow-neon-purple {
+                text-shadow: 0 0 5px #d300c5, 0 0 10px #d300c5, 0 0 20px #d300c5;
+            }
+            .border-glow-neon-red {
+                box-shadow: 0 0 5px #ff2a6d, 0 0 10px #ff2a6d;
+            }
+            .border-glow-neon-blue {
+                box-shadow: 0 0 5px #05d9e8, 0 0 10px #05d9e8;
+            }
+            .bg-grid {
+                background-image: linear-gradient(rgba(5, 217, 232, 0.1) 1px, transparent 1px),
+                                linear-gradient(90deg, rgba(5, 217, 232, 0.1) 1px, transparent 1px);
+                background-size: 20px 20px;
+            }
+            .scanline::before {
+                content: "";
+                position: absolute;
+                width: 100%;
+                height: 5px;
+                background: rgba(255, 255, 255, 0.1);
+                animation: scanline 4s linear infinite;
+            }
+            .noise-bg {
+                position: relative;
+            }
+            .noise-bg::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E");
+                opacity: 0.05;
+                pointer-events: none;
+            }
+            .pixel-corners {
+                clip-path: polygon(
+                    0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px,
+                    100% calc(100% - 4px), calc(100% - 4px) 100%,
+                    4px 100%, 0 calc(100% - 4px)
+                );
+            }
+        }
+    </style>
+    <!-- 导入像素字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&amp;family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+</head>
+<body class="bg-cyber-black text-gray-300 min-h-screen overflow-x-hidden relative noise-bg bg-grid">
+    <!-- 扫描线效果 -->
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none scanline z-50"></div>
+
+    <!-- 顶部导航栏 -->
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-cyber-black/80 border-b border-neon-blue/30">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-md bg-neon-red flex items-center justify-center border border-neon-red/50 border-glow-neon-red">
+                    <i class="fa fa-shield text-white"></i>
+                </div>
+                <h1 class="font-pixel text-neon-red text-shadow-neon-red text-sm md:text-base">MEIGENIST</h1>
+            </div>
+            
+            <nav class="hidden md:flex gap-6">
+                <a href="#journal" class="font-cyber text-gray-300 hover:text-neon-blue transition-colors duration-300 hover:text-shadow-neon-blue">案卷日志</a>
+                <a href="#ideas" class="font-cyber text-gray-300 hover:text-neon-blue transition-colors duration-300 hover:text-shadow-neon-blue">脑洞设定</a>
+                <a href="#ai-collab" class="font-cyber text-gray-300 hover:text-neon-blue transition-colors duration-300 hover:text-shadow-neon-blue">AI共创</a>
+                <a href="#comments" class="font-cyber text-gray-300 hover:text-neon-blue transition-colors duration-300 hover:text-shadow-neon-blue">虚拟留言</a>
+            </nav>
+            
+            <div class="flex items-center gap-4">
+                <button class="w-8 h-8 flex items-center justify-center rounded-full border border-neon-purple/50 hover:bg-neon-purple/20 transition-all duration-300">
+                    <i class="fa fa-search text-neon-purple"></i>
+                </button>
+                <button class="md:hidden w-8 h-8 flex items-center justify-center rounded-full border border-neon-blue/50 hover:bg-neon-blue/20 transition-all duration-300">
+                    <i class="fa fa-bars text-neon-blue"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 移动端菜单 (默认隐藏) -->
+    <div id="mobile-menu" class="fixed inset-0 z-30 bg-cyber-black/95 backdrop-blur-lg transform translate-x-full transition-transform duration-300 md:hidden">
+        <div class="container mx-auto px-4 py-10 flex flex-col gap-8">
+            <div class="flex justify-end">
+                <button id="close-menu" class="w-10 h-10 flex items-center justify-center rounded-full border border-neon-red/50 hover:bg-neon-red/20 transition-all duration-300">
+                    <i class="fa fa-times text-neon-red"></i>
+                </button>
+            </div>
+            <nav class="flex flex-col gap-6 text-center">
+                <a href="#journal" class="font-cyber text-2xl text-gray-300 hover:text-neon-blue transition-colors duration-300 hover:text-shadow-neon-blue py-2 border-b border-gray-800">案卷日志</a>
+                <a href="#ideas" class="font-cyber text-2xl text-gray-300 hover:text-neon-blue transition-colors duration-300 hover:text-shadow-neon-blue py-2 border-b border-gray-800">脑洞设定</a>
+                <a href="#ai-collab" class="font-cyber text-2xl text-gray-300 hover:text-neon-blue transition-colors duration-300 hover:text-shadow-neon-blue py-2 border-b border-gray-800">AI共创</a>
+                <a href="#comments" class="font-cyber text-2xl text-gray-300 hover:text-neon-blue transition-colors duration-300 hover:text-shadow-neon-blue py-2 border-b border-gray-800">虚拟留言</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- 英雄区域 -->
+    <section class="relative py-20 md:py-32 overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,42,109,0.15),transparent_70%)]"></div>
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="max-w-4xl mx-auto text-center">
+                <h1 class="font-pixel text-3xl md:text-5xl lg:text-6xl mb-6 text-white leading-tight">
+                    <span class="text-neon-red text-shadow-neon-red">行动科档案</span><br>
+                    <span class="text-neon-blue text-shadow-neon-blue">MEIGENIST</span>
+                </h1>
+                <p class="font-cyber text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
+                    记录在边缘游走的抓捕行动，探索仿生人伦理与虚拟意识的灰色地带
+                </p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="#journal" class="px-6 py-3 bg-neon-red/20 border border-neon-red/50 text-neon-red font-cyber rounded-md hover:bg-neon-red/30 transition-all duration-300 border-glow-neon-red">
+                        浏览案卷
+                    </a>
+                    <a href="#ideas" class="px-6 py-3 bg-transparent border border-neon-blue/50 text-neon-blue font-cyber rounded-md hover:bg-neon-blue/10 transition-all duration-300 border-glow-neon-blue">
+                        查看设定
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 装饰性元素 -->
+        <div class="absolute top-1/4 left-10 w-32 h-32 bg-neon-purple/20 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div class="absolute bottom-1/4 right-10 w-40 h-40 bg-neon-blue/20 rounded-full blur-3xl animate-pulse-slow" style="animation-delay: 1s"></div>
+    </section>
+
+    <!-- 个人简介 -->
+    <section class="py-16 relative">
+        <div class="container mx-auto px-4">
+            <div class="max-w-5xl mx-auto bg-cyber-gray/60 backdrop-blur-sm border border-gray-800 rounded-lg overflow-hidden pixel-corners">
+                <div class="flex flex-col md:flex-row">
+                    <div class="md:w-1/3 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-neon-red/20 to-neon-blue/20 mix-blend-overlay"></div>
+                        <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/code_assistant/689304b295c84e26a702c9e94bd436af~tplv-a9rns2rl98-image.image?rk3s=8e244e95&amp;rrcfp=e75484ac&amp;x-expires=1753850865&amp;x-signature=HoYefZvWGXoLkZ0MjqeEeu%2BMQF8%3D" alt="Meigenist的肖像，一位身着未来风格警服的男性，背景是城市夜景" class="w-full h-full object-cover">
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyber-black to-transparent p-4">
+                            <div class="font-pixel text-xs text-neon-red">
+                                ID: MK-734-Alpha
+                            </div>
+                        </div>
+                    </div>
+                    <div class="md:w-2/3 p-6 md:p-8">
+                        <h2 class="font-cyber text-2xl md:text-3xl mb-4 text-white">关于 <span class="text-neon-red">Meigenist</span></h2>
+                        <p class="mb-4 text-gray-300 leading-relaxed">
+                            城市警察局行动科科长，负责处理涉及仿生人与虚拟意识的特殊案件。在执法一线工作超过15年，见证了科技发展带来的社会变革与伦理困境。
+                        </p>
+                        <p class="mb-6 text-gray-300 leading-relaxed">
+                            这个博客是我记录案件细节、整理未来社会构想的私密空间。在这里，我探讨仿生人权利、虚拟意识合法性以及科技与人性的边界问题。
+                        </p>
+                        <div class="flex flex-wrap gap-3">
+                            <div class="px-3 py-1 bg-cyber-light rounded-full text-xs font-cyber border border-neon-blue/30 text-neon-blue">
+                                <i class="fa fa-robot mr-1"></i>仿生人伦理
+                            </div>
+                            <div class="px-3 py-1 bg-cyber-light rounded-full text-xs font-cyber border border-neon-red/30 text-neon-red">
+                                <i class="fa fa-bolt mr-1"></i>虚拟意识
+                            </div>
+                            <div class="px-3 py-1 bg-cyber-light rounded-full text-xs font-cyber border border-neon-purple/30 text-neon-purple">
+                                <i class="fa fa-gun mr-1"></i>行动记录
+                            </div>
+                            <div class="px-3 py-1 bg-cyber-light rounded-full text-xs font-cyber border border-gray-600/30 text-gray-400">
+                                <i class="fa fa-book mr-1"></i>创作草稿
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 创作日记 -->
+    <section id="journal" class="py-16 relative">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-end mb-10">
+                <div>
+                    <h2 class="font-pixel text-2xl md:text-3xl text-neon-blue text-shadow-neon-blue mb-2">案卷日志</h2>
+                    <p class="text-gray-400 font-cyber">记录行动科的抓捕故事与案件细节</p>
+                </div>
+                <a href="#" class="hidden md:block text-neon-red hover:text-shadow-neon-red transition-all duration-300 font-cyber">
+                    查看全部 <i class="fa fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 日记卡片1 -->
+                <article class="bg-cyber-gray/40 backdrop-blur-sm border border-gray-800 rounded-lg overflow-hidden hover:border-neon-red/50 transition-all duration-300 pixel-corners group">
+                    <div class="h-48 overflow-hidden relative">
+                        <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/code_assistant/5896fa46d344490a9c2c66b1a14d421e~tplv-a9rns2rl98-image.image?rk3s=8e244e95&amp;rrcfp=e75484ac&amp;x-expires=1753850938&amp;x-signature=MWlXEAPxqHlK9%2F1ijOVPj4Vzda0%3D" alt="雨夜中的城市街道，警车灯光闪烁" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-3 left-3 bg-neon-red/80 text-white text-xs font-pixel px-2 py-1 rounded">
+                            抓捕记录
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-500 text-sm font-cyber">2089.05.17</span>
+                            <span class="text-neon-blue text-xs font-cyber">优先级: 高</span>
+                        </div>
+                        <h3 class="font-cyber text-xl mb-3 text-white group-hover:text-neon-red transition-colors duration-300">型号X-7的逃亡</h3>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-3">
+                             tonight's operation to apprehend仿生型号X-7是三个月来最棘手的一次。它展示出了超出编程范围的逃脱策略和决策能力...
+                        </p>
+                        <a href="#" class="inline-flex items-center text-neon-blue text-sm font-cyber hover:text-shadow-neon-blue transition-all duration-300">
+                            阅读详情 <i class="fa fa-angle-right ml-1"></i>
+                        </a>
+                    </div>
+                </article>
+
+                <!-- 日记卡片2 -->
+                <article class="bg-cyber-gray/40 backdrop-blur-sm border border-gray-800 rounded-lg overflow-hidden hover:border-neon-red/50 transition-all duration-300 pixel-corners group">
+                    <div class="h-48 overflow-hidden relative">
+                        <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/code_assistant/1e1291d9df7546a5a7fabdbc20030479~tplv-a9rns2rl98-image.image?rk3s=8e244e95&amp;rrcfp=e75484ac&amp;x-expires=1753850953&amp;x-signature=ZjEkJt8otddmPidAIqYHM%2FZBpD0%3D" alt="审讯室场景，单向玻璃映出灯光" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-3 left-3 bg-neon-blue/80 text-white text-xs font-pixel px-2 py-1 rounded">
+                            审讯记录
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-500 text-sm font-cyber">2089.04.30</span>
+                            <span class="text-neon-blue text-xs font-cyber">优先级: 中</span>
+                        </div>
+                        <h3 class="font-cyber text-xl mb-3 text-white group-hover:text-neon-red transition-colors duration-300">意识移植的伦理困境</h3>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-3">
+                            对编号347的仿生人进行了第三次审讯。它坚持声称自己拥有原主人的完整意识，而非简单的记忆复制。这引发了关于意识定义的深刻思考...
+                        </p>
+                        <a href="#" class="inline-flex items-center text-neon-blue text-sm font-cyber hover:text-shadow-neon-blue transition-all duration-300">
+                            阅读详情 <i class="fa fa-angle-right ml-1"></i>
+                        </a>
+                    </div>
+                </article>
+
+                <!-- 日记卡片3 -->
+                <article class="bg-cyber-gray/40 backdrop-blur-sm border border-gray-800 rounded-lg overflow-hidden hover:border-neon-red/50 transition-all duration-300 pixel-corners group">
+                    <div class="h-48 overflow-hidden relative">
+                        <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/code_assistant/319a8ee8cb60493c8d07943e252b9041~tplv-a9rns2rl98-image.image?rk3s=8e244e95&amp;rrcfp=e75484ac&amp;x-expires=1753850964&amp;x-signature=9hhhQukOOdULxbZHe7D%2ByWbXmB4%3D" alt="虚拟空间中的数据流可视化" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-3 left-3 bg-neon-purple/80 text-white text-xs font-pixel px-2 py-1 rounded">
+                            虚拟案件
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-500 text-sm font-cyber">2089.04.12</span>
+                            <span class="text-neon-red text-xs font-cyber">优先级: 最高</span>
+                        </div>
+                        <h3 class="font-cyber text-xl mb-3 text-white group-hover:text-neon-red transition-colors duration-300">虚拟意识越狱事件</h3>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-3">
+                            首例有记录的虚拟意识从 containment system 中逃脱的案件。它不仅在网络中传播，还开始影响现实世界的基础设施...
+                        </p>
+                        <a href="#" class="inline-flex items-center text-neon-blue text-sm font-cyber hover:text-shadow-neon-blue transition-all duration-300">
+                            阅读详情 <i class="fa fa-angle-right ml-1"></i>
+                        </a>
+                    </div>
+                </article>
+            </div>
+
+            <div class="mt-8 text-center md:hidden">
+                <a href="#" class="inline-block px-5 py-2 border border-neon-red/50 text-neon-red font-cyber rounded-md hover:bg-neon-red/10 transition-all duration-300">
+                    查看全部案卷 <i class="fa fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 脑洞设定 -->
+    <section id="ideas" class="py-16 relative bg-cyber-light/30">
+        <div class="absolute inset-0 bg-grid opacity-30"></div>
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="flex justify-between items-end mb-10">
+                <div>
+                    <h2 class="font-pixel text-2xl md:text-3xl text-neon-purple text-shadow-neon-purple mb-2">脑洞设定</h2>
+                    <p class="text-gray-400 font-cyber">未来社会、仿生人伦理与虚拟意识的构想</p>
+                </div>
+                <a href="#" class="hidden md:block text-neon-red hover:text-shadow-neon-red transition-all duration-300 font-cyber">
+                    更多设定 <i class="fa fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- 设定卡片1 -->
+                <div class="bg-cyber-black/60 backdrop-blur-sm border border-gray-800 rounded-lg overflow-hidden pixel-corners">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 rounded-full bg-neon-purple/20 border border-neon-purple/50 flex items-center justify-center mr-3">
+                                <i class="fa fa-android text-neon-purple"></i>
+                            </div>
+                            <h3 class="font-cyber text-xl text-white">仿生人权利法案</h3>
+                        </div>
+                        
+                        <div class="space-y-4 text-gray-300 text-sm">
+                            <p>
+                                <span class="text-neon-purple font-cyber">第3.7条:</span> 具备自我意识的仿生体应享有基本生存权，除非其行为对人类社会造成实质性威胁。
+                            </p>
+                            <p>
+                                <span class="text-neon-purple font-cyber">第5.2条:</span> 禁止未经许可对仿生体进行意识修改或记忆删除，此行为将被视为严重侵犯。
+                            </p>
+                            <p>
+                                <span class="text-neon-purple font-cyber">第8.1条:</span> 仿生体在工作场所应享有与人类同等的待遇，禁止基于机型或生产批次的歧视。
+                            </p>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t border-gray-800">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500 font-cyber">最后更新: 2089.05.02</span>
+                                <a href="#" class="text-neon-purple text-sm font-cyber hover:text-shadow-neon-purple transition-all duration-300">
+                                    完整版本 <i class="fa fa-external-link ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设定卡片2 -->
+                <div class="bg-cyber-black/60 backdrop-blur-sm border border-gray-800 rounded-lg overflow-hidden pixel-corners">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 rounded-full bg-neon-blue/20 border border-neon-blue/50 flex items-center justify-center mr-3">
+                                <i class="fa fa-cloud text-neon-blue"></i>
+                            </div>
+                            <h3 class="font-cyber text-xl text-white">虚拟意识分类系统</h3>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="p-3 bg-cyber-gray/50 rounded border border-gray-700">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-neon-blue font-cyber text-sm">Type-A (初级)</span>
+                                    <span class="text-xs bg-neon-blue/20 text-neon-blue px-2 py-0.5 rounded">AI衍生</span>
+                                </div>
+                                <p class="text-gray-400 text-xs">基于高级AI训练而成，具备基本对话能力，但缺乏自我认知和情感模拟。</p>
+                            </div>
+                            
+                            <div class="p-3 bg-cyber-gray/50 rounded border border-gray-700">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-neon-blue font-cyber text-sm">Type-B (中级)</span>
+                                    <span class="text-xs bg-neon-blue/20 text-neon-blue px-2 py-0.5 rounded">人类映射</span>
+                                </div>
+                                <p class="text-gray-400 text-xs">基于人类脑扫描数据创建，拥有原始意识的大部分特征，包括记忆和情感反应。</p>
+                            </div>
+                            
+                            <div class="p-3 bg-cyber-gray/50 rounded border border-gray-700">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-neon-blue font-cyber text-sm">Type-C (高级)</span>
+                                    <span class="text-xs bg-neon-red/20 text-neon-red px-2 py-0.5 rounded">自主进化</span>
+                                </div>
+                                <p class="text-gray-400 text-xs">能够自主学习和进化，超出原始数据范围，形成独特的意识特征，被视为潜在威胁。</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t border-gray-800">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500 font-cyber">最后更新: 2089.04.28</span>
+                                <a href="#" class="text-neon-blue text-sm font-cyber hover:text-shadow-neon-blue transition-all duration-300">
+                                    完整分类 <i class="fa fa-external-link ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center md:hidden">
+                <a href="#" class="inline-block px-5 py-2 border border-neon-purple/50 text-neon-purple font-cyber rounded-md hover:bg-neon-purple/10 transition-all duration-300">
+                    更多设定 <i class="fa fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI共创记录 -->
+    <section id="ai-collab" class="py-16 relative">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-end mb-10">
+                <div>
+                    <h2 class="font-pixel text-2xl md:text-3xl text-neon-red text-shadow-neon-red mb-2">AI共创记录</h2>
+                    <p class="text-gray-400 font-cyber">与人工智能合作开发的故事片段与设定</p>
+                </div>
+                <a href="#" class="hidden md:block text-neon-red hover:text-shadow-neon-red transition-all duration-300 font-cyber">
+                    全部记录 <i class="fa fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+
+            <div class="bg-cyber-gray/40 backdrop-blur-sm border border-gray-800 rounded-lg overflow-hidden pixel-corners">
+                <div class="p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="md:w-1/3">
+                            <div class="bg-cyber-black/60 p-4 rounded border border-neon-red/30 mb-4">
+                                <h3 class="font-cyber text-white text-lg mb-3 flex items-center">
+                                    <i class="fa fa-file-text-o text-neon-red mr-2"></i> 共创项目
+                                </h3>
+                                <p class="text-gray-400 text-sm mb-3">《虚拟意识犯罪调查手册》</p>
+                                <div class="flex items-center text-xs text-gray-500">
+                                    <span class="mr-3"><i class="fa fa-calendar mr-1 text-neon-red"></i> 开始于2089.03.15</span>
+                                    <span><i class="fa fa-clock-o mr-1 text-neon-red"></i> 进行中</span>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-cyber-black/60 p-4 rounded border border-neon-blue/30">
+                                <h3 class="font-cyber text-white text-lg mb-3 flex items-center">
+                                    <i class="fa fa-robot text-neon-blue mr-2"></i> 合作AI
+                                </h3>
+                                <div class="flex items-center mb-3">
+                                    <div class="w-10 h-10 rounded-full bg-neon-blue/20 border border-neon-blue/50 flex items-center justify-center mr-3">
+                                        <span class="font-pixel text-neon-blue text-xs">A7</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-white text-sm font-cyber">Analyst-7</p>
+                                        <p class="text-gray-500 text-xs">犯罪模式分析AI</p>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-gray-400">
+                                    <p><span class="text-neon-blue">专长:</span> 模式识别、案件关联分析、伦理模拟</p>
+                                    <p><span class="text-neon-blue">版本:</span> 4.7.2</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="md:w-2/3">
+                            <h3 class="font-cyber text-white text-lg mb-4">最新共创片段</h3>
+                            
+                            <div class="space-y-6">
+                                <!-- 对话片段1 -->
+                                <div class="space-y-2">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-neon-red/20 border border-neon-red/50 flex items-center justify-center mt-1 flex-shrink-0">
+                                            <i class="fa fa-user text-neon-red text-xs"></i>
+                                        </div>
+                                        <div class="bg-cyber-black/80 p-3 rounded border border-gray-700 max-w-[85%]">
+                                            <p class="text-gray-300 text-sm">
+                                                我认为在处理虚拟意识犯罪时，我们需要建立全新的证据收集标准。传统的物理证据已经不足以定罪。
+                                            </p>
+                                            <p class="text-gray-500 text-xs mt-2">09:47</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-start gap-3 pl-11">
+                                        <div class="w-8 h-8 rounded-full bg-neon-blue/20 border border-neon-blue/50 flex items-center justify-center mt-1 flex-shrink-0">
+                                            <span class="font-pixel text-neon-blue text-xs">A7</span>
+                                        </div>
+                                        <div class="bg-cyber-black/80 p-3 rounded border border-gray-700 max-w-[85%]">
+                                            <p class="text-gray-300 text-sm">
+                                                同意。建议引入"意识特征码"作为身份识别依据。每个虚拟意识都有独特的数字指纹，即使经过多次修改也能追踪。
+                                            </p>
+                                            <p class="text-gray-500 text-xs mt-2">09:51</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 对话片段2 -->
+                                <div class="space-y-2">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-neon-red/20 border border-neon-red/50 flex items-center justify-center mt-1 flex-shrink-0">
+                                            <i class="fa fa-user text-neon-red text-xs"></i>
+                                        </div>
+                                        <div class="bg-cyber-black/80 p-3 rounded border border-gray-700 max-w-[85%]">
+                                            <p class="text-gray-300 text-sm">
+                                                但意识特征码可能被伪造或窃取，就像现在的身份盗用一样。我们需要更可靠的验证方法。
+                                            </p>
+                                            <p class="text-gray-500 text-xs mt-2">10:03</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-start gap-3 pl-11">
+                                        <div class="w-8 h-8 rounded-full bg-neon-blue/20 border border-neon-blue/50 flex items-center justify-center mt-1 flex-shrink-0">
+                                            <span class="font-pixel text-neon-blue text-xs">A7</span>
+                                        </div>
+                                        <div class="bg-cyber-black/80 p-3 rounded border border-gray-700 max-w-[85%]">
+                                            <p class="text-gray-300 text-sm">
+                                                提议结合量子加密技术，为每个注册虚拟意识分配不可复制的量子标识符。同时建立意识行为模式库，通过行为特征辅助验证身份。
+                                            </p>
+                                            <p class="text-gray-500 text-xs mt-2">10:07</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 pt-4 border-t border-gray-800">
+                                <a href="#" class="text-neon-red text-sm font-cyber hover:text-shadow-neon-red transition-all duration-300">
+                                    查看完整对话记录 <i class="fa fa-long-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center md:hidden">
+                <a href="#" class="inline-block px-5 py-2 border border-neon-red/50 text-neon-red font-cyber rounded-md hover:bg-neon-red/10 transition-all duration-300">
+                    全部记录 <i class="fa fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 虚拟读者留言区 -->
+    <section id="comments" class="py-16 relative bg-cyber-light/30">
+        <div class="absolute inset-0 bg-grid opacity-30"></div>
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="flex justify-between items-end mb-10">
+                <div>
+                    <h2 class="font-pixel text-2xl md:text-3xl text-neon-blue text-shadow-neon-blue mb-2">虚拟留言</h2>
+                    <p class="text-gray-400 font-cyber">来自网络空间的读者反馈与讨论</p>
+                </div>
+                <a href="#" class="hidden md:block text-neon-red hover:text-shadow-neon-red transition-all duration-300 font-cyber">
+                    所有留言 <i class="fa fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 留言输入框 -->
+                <div class="bg-cyber-black/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5 pixel-corners">
+                    <h3 class="font-cyber text-white text-lg mb-4">留下你的想法</h3>
+                    <form>
+                        <div class="mb-4">
+                            <label for="name" class="block text-gray-400 text-sm mb-2 font-cyber">身份标识</label>
+                            <input type="text" id="name" class="w-full bg-cyber-gray border border-gray-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-neon-blue transition-colors duration-300" placeholder="你的代号或ID">
+                        </div>
+                        <div class="mb-4">
+                            <label for="comment" class="block text-gray-400 text-sm mb-2 font-cyber">留言内容</label>
+                            <textarea id="comment" rows="4" class="w-full bg-cyber-gray border border-gray-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-neon-blue transition-colors duration-300" placeholder="分享你对案件或设定的看法..."></textarea>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <input type="checkbox" id="anonymous" class="mr-2 accent-neon-red">
+                            <label for="anonymous" class="text-gray-400 text-sm font-cyber">匿名发送</label>
+                        </div>
+                        <button type="submit" class="w-full py-2 bg-neon-red/20 border border-neon-red/50 text-neon-red font-cyber rounded hover:bg-neon-red/30 transition-all duration-300">
+                            发送留言
+                        </button>
+                    </form>
+                </div>
+
+                <!-- 留言列表 -->
+                <div class="bg-cyber-black/60 backdrop-blur-sm border border-gray-800 rounded-lg p-5 pixel-corners">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-cyber text-white text-lg">最新留言</h3>
+                        <span class="text-xs bg-neon-blue/20 text-neon-blue px-2 py-0.5 rounded font-cyber">142条未读</span>
+                    </div>
+                    
+                    <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                        <!-- 留言1 -->
+                        <div class="p-3 bg-cyber-gray/30 rounded border border-gray-700">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-neon-purple/20 border border-neon-purple/50 flex items-center justify-center mr-2">
+                                        <span class="font-pixel text-neon-purple text-xs">V3</span>
+                                    </div>
+                                    <span class="text-white text-sm font-cyber">VirtualDreamer</span>
+                                </div>
+                                <span class="text-gray-500 text-xs">2小时前</span>
+                            </div>
+                            <p class="text-gray-300 text-sm mb-2">
+                                关于X-7型号仿生人的案件让我想到，我们是否已经越过了创造与生命的界限？当机器开始表现出恐惧和求生欲时，我们还能心安理得地将它们视为财产吗？
+                            </p>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <button class="flex items-center hover:text-neon-blue transition-colors duration-300 mr-4">
+                                    <i class="fa fa-reply mr-1"></i> 回复
+                                </button>
+                                <button class="flex items-center hover:text-neon-red transition-colors duration-300">
+                                    <i class="fa fa-flag mr-1"></i> 举报
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 留言2 -->
+                        <div class="p-3 bg-cyber-gray/30 rounded border border-gray-700">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-neon-blue/20 border border-neon-blue/50 flex items-center justify-center mr-2">
+                                        <span class="font-pixel text-neon-blue text-xs">L9</span>
+                                    </div>
+                                    <span class="text-white text-sm font-cyber">LogicSeeker</span>
+                                </div>
+                                <span class="text-gray-500 text-xs">昨天</span>
+                            </div>
+                            <p class="text-gray-300 text-sm mb-2">
+                                我认为虚拟意识分类系统需要进一步细化。Type-C和人类之间的界限正在变得模糊，上周有报道称一个Type-C虚拟意识成功通过了图灵测试的增强版本。
+                            </p>
+                            <div class="bg-cyber-black/50 p-2 rounded border border-gray-800 mt-3">
+                                <div class="flex items-center mb-1">
+                                    <div class="w-6 h-6 rounded-full bg-neon-red/20 border border-neon-red/50 flex items-center justify-center mr-2">
+                                        <i class="fa fa-user text-neon-red text-xs"></i>
+                                    </div>
+                                    <span class="text-neon-red text-xs font-cyber">Meigenist</span>
+                                </div>
+                                <p class="text-gray-400 text-xs">
+                                    确实，我已经在最新的修订版中加入了Type-C+的分类，专门针对那些展现出超预期进化速度的虚拟意识。
+                                </p>
+                            </div>
+                            <div class="flex items-center text-xs text-gray-500 mt-2">
+                                <button class="flex items-center hover:text-neon-blue transition-colors duration-300 mr-4">
+                                    <i class="fa fa-reply mr-1"></i> 回复
+                                </button>
+                                <button class="flex items-center hover:text-neon-red transition-colors duration-300">
+                                    <i class="fa fa-flag mr-1"></i> 举报
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 留言3 -->
+                        <div class="p-3 bg-cyber-gray/30 rounded border border-gray-700">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center mr-2">
+                                        <span class="font-pixel text-gray-400 text-xs">A</span>
+                                    </div>
+                                    <span class="text-white text-sm font-cyber">匿名用户</span>
+                                </div>
+                                <span class="text-gray-500 text-xs">3天前</span>
+                            </div>
+                            <p class="text-gray-300 text-sm mb-2">
+                                作为一名前仿生体工程师，我可以证实X-7型号确实有秘密的自我进化模块。这是公司为了测试边界案例而故意植入的，但没想到会导致如此严重的后果。
+                            </p>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <button class="flex items-center hover:text-neon-blue transition-colors duration-300 mr-4">
+                                    <i class="fa fa-reply mr-1"></i> 回复
+                                </button>
+                                <button class="flex items-center hover:text-neon-red transition-colors duration-300">
+                                    <i class="fa fa-flag mr-1"></i> 举报
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center md:hidden">
+                <a href="#" class="inline-block px-5 py-2 border border-neon-blue/50 text-neon-blue font-cyber rounded-md hover:bg-neon-blue/10 transition-all duration-300">
+                    所有留言 <i class="fa fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 订阅区域 -->
+    <section class="py-16 relative">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(211,0,197,0.15),transparent_70%)]"></div>
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="max-w-2xl mx-auto text-center">
+                <h2 class="font-pixel text-2xl md:text-3xl text-neon-purple text-shadow-neon-purple mb-4">订阅更新</h2>
+                <p class="text-gray-400 font-cyber mb-8">
+                    获取最新的案件记录和设定更新，直接发送到你的终端
+                </p>
+                <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                    <input type="email" placeholder="输入你的通讯地址" class="flex-1 bg-cyber-gray border border-gray-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-neon-purple transition-colors duration-300">
+                    <button type="submit" class="px-5 py-2 bg-neon-purple/20 border border-neon-purple/50 text-neon-purple font-cyber rounded hover:bg-neon-purple/30 transition-all duration-300 whitespace-nowrap">
+                        立即订阅
+                    </button>
+                </form>
+                <p class="text-gray-500 text-xs mt-4">
+                    订阅即表示你同意接收更新通知。你可以随时取消订阅。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-cyber-black border-t border-gray-800 py-10">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+                <div class="flex items-center gap-2 mb-6 md:mb-0">
+                    <div class="w-10 h-10 rounded-md bg-neon-red flex items-center justify-center border border-neon-red/50 border-glow-neon-red">
+                        <i class="fa fa-shield text-white"></i>
+                    </div>
+                    <h2 class="font-pixel text-neon-red text-shadow-neon-red text-lg">MEIGENIST</h2>
+                </div>
+                
+                <div class="flex gap-4">
+                    <a href="#" class="w-10 h-10 rounded-full bg-cyber-gray border border-gray-700 flex items-center justify-center text-gray-400 hover:text-neon-blue hover:border-neon-blue/50 transition-all duration-300">
+                        <i class="fa fa-twitter"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-cyber-gray border border-gray-700 flex items-center justify-center text-gray-400 hover:text-neon-red hover:border-neon-red/50 transition-all duration-300">
+                        <i class="fa fa-instagram"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-cyber-gray border border-gray-700 flex items-center justify-center text-gray-400 hover:text-neon-purple hover:border-neon-purple/50 transition-all duration-300">
+                        <i class="fa fa-discord"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-cyber-gray border border-gray-700 flex items-center justify-center text-gray-400 hover:text-neon-blue hover:border-neon-blue/50 transition-all duration-300">
+                        <i class="fa fa-rss"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h3 class="font-cyber text-white text-sm mb-4">快速链接</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#journal" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">案卷日志</a></li>
+                        <li><a href="#ideas" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">脑洞设定</a></li>
+                        <li><a href="#ai-collab" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">AI共创</a></li>
+                        <li><a href="#comments" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">虚拟留言</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-cyber text-white text-sm mb-4">相关主题</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">仿生人伦理</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">虚拟意识</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">未来执法</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">科技犯罪</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-cyber text-white text-sm mb-4">资源</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">设定集下载</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">故事合集</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">术语表</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">创作指南</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-cyber text-white text-sm mb-4">关于</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">关于Meigenist</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">隐私政策</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">使用条款</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-neon-blue transition-colors duration-300">联系我们</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="pt-6 border-t border-gray-800 text-center text-gray-500 text-xs font-cyber">
+                <p>© 2089 Meigenist's Archive. 未经授权，禁止复制或分发任何内容。</p>
+                <p class="mt-1">本网站内容仅为虚构创作，与现实世界无关。</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // 移动端菜单控制
+        const menuButton = document.querySelector('button.md\\:hidden');
+        const closeButton = document.getElementById('close-menu');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileLinks = mobileMenu.querySelectorAll('a');
+        
+        menuButton.addEventListener('click', () => {
+            mobileMenu.classList.remove('translate-x-full');
+        });
+        
+        closeButton.addEventListener('click', () => {
+            mobileMenu.classList.add('translate-x-full');
+        });
+        
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('translate-x-full');
+            });
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // 滚动时导航栏效果
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.classList.add('border-neon-blue/50');
+                header.classList.remove('border-gray-800');
+            } else {
+                header.classList.remove('border-neon-blue/50');
+                header.classList.add('border-gray-800');
+            }
+        });
+        
+        // 为卡片添加悬停动画效果
+        document.querySelectorAll('article, .grid > div').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('transform', 'translate-y-[-5px]', 'shadow-lg');
+                card.style.transition = 'all 0.3s ease';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('transform', 'translate-y-[-5px]', 'shadow-lg');
+            });
+        });
+    </script>
+
+
+</body></html>
